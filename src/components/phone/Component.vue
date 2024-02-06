@@ -47,8 +47,6 @@ function validatePhone(value) {
         return false;
     }
 
-    console.log(phoneParsed);
-
     if (phoneParsed.country !== code) {
         let country = countries.find((c) => c["iso"] === phoneParsed.country);
         setCountry(country);
