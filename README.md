@@ -8,6 +8,7 @@ Demands:
 3. Validation phone number
 
 Form visual:
+
 ![Form visual](./docs/form-visual.jpg)
 
 ## Run project
