@@ -4,19 +4,30 @@ import "../../assets/css/phone-component.css";
 
 import countries from "./countries.js";
 import {onMounted, ref, watch} from "vue";
-import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js'
+import {parsePhoneNumberWithError, isValidPhoneNumber} from 'libphonenumber-js'
 
 let isOpen = ref(false);
 let phone = ref("");
 let countriesList = ref(countries);
 let search = ref("");
-let timer = ref(null);
-let selectedCountry = ref({});
+let timer;
+let selectedCountry = ref(null);
 
 let error = ref({
     "status": false,
     "message": ""
 });
+
+function setError(status, message) {
+    error.value = {
+        "status": status,
+        "message": message
+    }
+}
+
+function classWhenOpen(className, alternativeClassName = "") {
+    return isOpen.value ? className : alternativeClassName;
+}
 
 function setHovered(country, value) {
     country.isHovered = value;
@@ -31,45 +42,60 @@ function setCountry(country) {
     isOpen.value = false;
     search.value = "";
     countriesList.value = countries;
-    validatePhone(phone.value);
+    parseCountry(phone.value);
 }
 
-function validatePhone(value) {
-    clearTimeout(timer.value);
+function parseCountry(value) {
     phone.value = value.replace(/[^0-9+]/g, '');
-
-    let code = selectedCountry.value['iso']
-    let phoneParsed = parsePhoneNumber(phone.value, {
-        defaultCountry: code
-    })
-
-    if (!phoneParsed) {
-        return false;
+    if (phone.value === "" || phone.value.length < 2) {
+        return;
     }
 
-    if (phoneParsed.country !== code) {
-        let country = countries.find((c) => c["iso"] === phoneParsed.country);
-        setCountry(country);
+    let code = selectedCountry.value['iso'];
+    let phoneParsed
+
+    try {
+        phoneParsed = parsePhoneNumberWithError(phone.value, {
+            defaultCountry: code
+        })
+    } catch (e) {
+        let message = "Неверный формат номера телефона"
+        if (e.message === "TOO_SHORT") {
+            message = "Слишком короткий номер телефона"
+        }
+
+        setError(true, message);
+        return;
     }
 
-    let isValid = isValidPhoneNumber(phoneParsed.number, {
+    switchCountry(phoneParsed.country, code);
+    validateCountry(phoneParsed.number, code);
+}
+
+function switchCountry(parsedCountry, SelectedCountry) {
+    if (parsedCountry === SelectedCountry) {
+        return;
+    }
+
+    let country = countries.find((c) => c["iso"] === parsedCountry);
+    setCountry(country);
+}
+
+function validateCountry(number, code) {
+    clearTimeout(timer);
+
+    let isValid = isValidPhoneNumber(number, {
         defaultCountry: code
     })
 
     if (!isValid) {
-        timer.value = setTimeout(() => {
-            error.value = {
-                "status": true,
-                "message": "Неверный формат номера телефона"
-            }
+        timer = setTimeout(() => {
+            setError(true, "Неверный формат номера телефона");
         }, 600);
         return false;
     }
 
-    error.value = {
-        "status": false,
-        "message": ""
-    }
+    setError(false, "");
 }
 
 watch(search, (value) => {
@@ -89,40 +115,43 @@ watch(search, (value) => {
 })
 
 onMounted(async () => {
-    await fetch('https://api.country.is/')
-        .then(response => response.json())
-        .then(data => {
-            let country = (data["country"] ?? "kz");
-            setDefaultCountry(country);
-        })
+    try {
+        await fetch('https://api.country.is/')
+            .then(response => response.json())
+            .then(data => {
+                setDefaultCountry(data["country"]);
+            })
+    } catch (e) {
+        setDefaultCountry("KZ")
+        console.log(e)
+    }
 });
 </script>
 
 <template>
-    <div>
+    <div v-if="selectedCountry && selectedCountry['iso']">
         <label for="phone">Номер телефона</label>
-        <div class="phone-input">
+        <div class="phone-input mt-3">
             <input
                 v-model="phone"
-                @input="input => validatePhone(input.target.value)"
+                @input="input => parseCountry(input.target.value)"
                 type="tel"
                 name="phone"
                 id="phone"
-                :placeholder="`Введите номер телефона ${ selectedCountry['country_code'] ?? '+7' } _________`"
-                class="phone"
+                :placeholder="`Введите номер телефона ${ selectedCountry['country_code'] } _________`"
                 autocomplete="off"
             />
 
             <div class="dropdown">
                 <div
-                    :class="`dropdown-trigger ${ isOpen ? 'open' : '' }`"
+                    :class="`dropdown-trigger ${ classWhenOpen('open') }`"
                     @click="isOpen = !isOpen"
                 >
-                    <span :class="`fflag fflag-${ selectedCountry['iso'] ?? 'KZ' }`"></span>
+                    <span :class="`fflag fflag-${ selectedCountry['iso'] }`"></span>
                     <span>▼</span>
                 </div>
 
-                <ul :class="`dropdown-list ${ isOpen ? '' : 'hidden' }`">
+                <ul :class="`dropdown-list ${ classWhenOpen('', 'hidden') }`">
                     <li>
                         <input
                             type="text"
@@ -139,7 +168,7 @@ onMounted(async () => {
                         @mouseout="setHovered(country, false)"
                         @click="setCountry(country)"
                     >
-                        <span :class="`fflag fflag-${ country.iso ?? 'KZ' }`"></span>
+                        <span :class="`fflag fflag-${ country.iso }`"></span>
                         <strong>{{ country.en_name }} ({{ country.origin_name }})</strong>
                         <span>{{ country.country_code }}</span>
                     </li>

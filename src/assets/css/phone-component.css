@@ -110,7 +110,7 @@ input#phone {
     background: #f3f3f3;
 }
 
-.dropdown-list li {
+.dropdown-list li:nth-child(n+2) {
     padding: 4px 15px;
     line-height: 1.5em;
     cursor: pointer;

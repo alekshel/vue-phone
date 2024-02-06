@@ -23,3 +23,7 @@ ul {
 strong {
     font-weight: 500;
 }
+
+.mt-3 {
+    margin-top: 3px;
+}
