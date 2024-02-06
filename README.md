@@ -1,7 +1,21 @@
-# Vue 3 + Vite
+# Vue 3 Technical Task
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Task: Create component for input phone number
 
-## Recommended IDE Setup
+Demands:
+1. Dropdown with countries list
+2. Auto switching country by input phone number
+3. Validation phone number
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+Form visual:
+![Form visual](./docs/form-visual.jpg)
+
+## Run project
+
+1. Clone the repository
+2. Run ```npm install``` to install all dependencies
+3. Run ```npm run dev``` to start the project
+
+## Additional information
+
+Created auto switching country onMounted by API request with IP parameter.
