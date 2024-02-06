@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "libphonenumber-js": "^1.10.55",
     "vue": "^3.3.11"
   },
   "devDependencies": {
